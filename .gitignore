@@ -1,0 +1,45 @@
+# Build directories
+/build/
+out/
+bin/
+Debug/
+Release/
+x64/
+x86/
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Visual Studio files
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.pdb
+*.obj
+*.tlog
+*.ipch
+*.aps
+*.user
+*.suo
+*.opensdf
+*.sdf
+*.log
+*.db
+*.cache
+
+# Executables
+*.exe
+*.dll
+*.lib
+*.exp
+
+# SFML DLLs (optional if you include them manually)
+sfml-*.dll
+
+# OS-specific
+.DS_Store
+Thumbs.db
