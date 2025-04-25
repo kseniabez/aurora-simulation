@@ -1,45 +1,65 @@
-# Build directories
-/build/
-out/
-bin/
-Debug/
-Release/
-x64/
-x86/
+# Ignore build artifacts and intermediate files
+[D|d]ebug/
+[D|d]ebugCode/
+[D|d]ebugView/
+[D|d]ebugGame/
+[D|d]ebugTests/
+[D|d]ebugStatic/
+[D|d]ebugDynamic/
 
-# CMake files
-CMakeFiles/
+# Ignore Visual Studio-specific files
+.vs/
+.vscode/
+.idea/
+
+# Ignore CMake build folders and files
 CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
 cmake_install.cmake
 Makefile
 
-# Visual Studio files
-*.sln
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
-*.pdb
-*.obj
-*.tlog
-*.ipch
-*.aps
+# Ignore build artifacts from the cmake build system
+*/Debug/
+*/CMakeFiles/
+
+# Ignore the generated project files
 *.user
 *.suo
-*.opensdf
-*.sdf
-*.log
-*.db
-*.cache
+*.userosscache
+*.sln.docstates
 
-# Executables
-*.exe
+# Ignore compiled library and executable files
 *.dll
+*.exe
+*.pdb
 *.lib
-*.exp
+*.ilk
+*.obj
 
-# SFML DLLs (optional if you include them manually)
-sfml-*.dll
+# Ignore static analysis tools (if any)
+*.ccomp
+*.cppcomp
+*.vcxproj.user
 
-# OS-specific
-.DS_Store
+# Ignore other build-related artifacts
+*.tlog
+*.log
+*.ilk
+
+# Ignore Qt Creator related files
+*.qmake.conf
+*.pro.user
+
+# Ignore generated files from glm and other libraries
+glm/**/build/
+glm/**/debug/
+glm/**/doc/
+
+# Ignore any test-specific directories or files
+test/**
+*/test/**
+
+# Ignore system files
 Thumbs.db
+Desktop.ini

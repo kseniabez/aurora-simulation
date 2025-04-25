@@ -1,13 +1,30 @@
-cmake_minimum_required(VERSION 3.10)
-project(FluidSim)
+project(aurora-simulation)
 
-set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "-O2 -Wall")
 
-# Add the source files
-add_executable(FluidSim src/main.cpp src/fluid_sim.cpp)
+IF(APPLE)
+  SET(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
+ENDIF(APPLE)
 
-# SFML
-set(SFML_DIR "D:/Program Files/SFML-2.6.2/lib/cmake/SFML")
-include_directories(${SFML_INCLUDE_DIRS})
-find_package(SFML 2.6 COMPONENTS graphics window system REQUIRED)
-target_link_libraries(FluidSim sfml-graphics sfml-window sfml-system)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package (SDL2 REQUIRED)
+
+message(STATUS "Lib: ${SDL2_LIBRARIES} , Include: ${SDL2_INCLUDE_DIRS}")
+
+include_directories(
+  ${SDL2_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/glm
+  ${CMAKE_SOURCE_DIR}/SDL2Auxiliary
+)
+
+add_executable(AuroraSimSkeletonSDL2
+  skeletonSDL2.cpp
+  ${CMAKE_SOURCE_DIR}/SDL2Auxiliary/SDL2Auxiliary.cpp
+)
+
+target_link_libraries(AuroraSimSkeletonSDL2
+  ${SDL2_LIBRARIES}
+)
