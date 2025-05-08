@@ -61,7 +61,7 @@ int frameCount = 0;
 vector<bool> is_occupied;
 #define IX(x, y) ((x) + (y) * N)
 
-int stageDuration = 200;
+int stageDuration = 100;
 
 // ---------------------------------------------------------
 // FUNCTION DECLARATIONS
@@ -75,7 +75,7 @@ void project(vector<float>& velocX, vector<float>& velocY, vector<float>& p, vec
 static void advect(int b, vector<float>& d, vector<float>& d0, vector<float>& velocX, vector<float>& velocY, float dt);
 void FluidCubeAddVelocity(FluidCube* cube, int x, int y, float amountX, float amountY);
 void FluidCubeStep(FluidCube* cube);
-void AuroraPhase(FluidCube* cube, int phase);
+void AuroraPhase(FluidCube* cube, int phase, float centerX, float centerY, float radius, float falloff, float strength);
 
 // ---------------------------------------------------------
 // FUNCTION DEFINITIONS
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 
 	sdlAux = new SDL2Aux(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-	cube = new FluidCube(N, 0.0f, 0.0001f, 0.1f);
+	cube = new FluidCube(N, 0.000001f, 0.0001f, 0.1f);
 
 	if (cube == nullptr) {
 		std::cerr << "Failed to allocate FluidCube!" << std::endl;
@@ -118,7 +118,7 @@ void Update()
 	t = t2;
 	std::cout << "Render time: " << dt * 1000.0f << " ms." << std::endl;
 
-	int phase = frameCount / stageDuration + 1;
+	int phase = (frameCount / stageDuration) % 4;
 
 	for (int j = 0; j < N && frameCount == 0; ++j) {
 		for (int i = N / 2 - 1; i < N / 2 + 1; i++)
@@ -126,67 +126,76 @@ void Update()
 			FluidCubeAddDensity(cube, j, i, 2.0f);
 		}
 	}
-	AuroraPhase(cube, phase);
 
+	AuroraPhase(cube, phase, N / 2, N / 2, 10.0f, 20.0f, 0.002f);
 	FluidCubeStep(cube);
 	frameCount++;
 }
 
-void AuroraPhase(FluidCube* cube, int phase)
+void AuroraPhase(FluidCube* cube, int phase, float centerX, float centerY, float radius, float falloff, float strength)
 {
-	switch (phase) {
-	case 0:
-		// Do nothing
-		break;
+	for (int j = 1; j < N - 1; ++j) {
+		for (int i = 1; i < N - 1; ++i) {
+			float dx = i - centerX;
+			float dy = j - centerY;
+			float dist = sqrtf(dx * dx + dy * dy);
 
-	case 1: {
-		float amplitude = 0.0025f;
-		float frequency = 2.0f * M_PI / N;
-		float omega = 0.1f;
+			float weight = 0.0f;
+			if (dist < radius)
+				weight = 1.0f;
+			else if (dist < radius + falloff)
+				weight = 1.0f - (dist - radius) / falloff;
 
-		for (int j = 1; j < N - 1; ++j) {
-			for (int i = 1; i < N - 1; ++i) {
+			if (weight <= 0.0f) continue;
+
+			int col = frameCount % (stageDuration * 4);
+
+		switch (phase) {
+			case 0:
+				/*for (int k = N / 2 - 1; k < N / 2 + 1; k++)
+				{
+					FluidCubeAddDensity(cube, col, k, 0.1f);
+				}*/
+				break;
+
+			case 1: {
+				// Simple vertical oscillation (init wiggle)
+				float amplitude = strength * 1.0f;
+				float frequency = 2.0f * M_PI / N;
+				float omega = 0.1f;
 				float vx = 0.0f;
-				float vy = amplitude * sinf(frequency * i - omega * frameCount);
+				float vy = amplitude * sinf(frequency * i - omega * frameCount) * weight;
 				FluidCubeAddVelocity(cube, i, j, vx, vy);
+				break;
 			}
-		}
-		break;
-	}
 
-	case 111: {
-		float amp1 = 0.002f, amp2 = 0.001f;
-		float freq1 = 2.0f * M_PI / N, freq2 = 4.0f * M_PI / N;
+			case 2: {
+				// Twisting with radial pull
+				float swirl_strength = strength * expf(-frameCount / 400.0f);
+				float radial_pull = strength * 0.2f;
+				float dist_safe = dist + 1e-5f;
 
-		for (int j = 1; j < N - 1; ++j) {
-			for (int i = 1; i < N - 1; ++i) {
-				float vy = amp1 * sinf(freq1 * i - 0.1f * frameCount)
-					+ amp2 * sinf(freq2 * i + 0.1f * frameCount);
-				FluidCubeAddVelocity(cube, i, j, 0.0f, vy);
-			}
-		}
-		break;
-	}
-
-	case 2:
-	default: {
-		float swirl_strength = 0.002f * expf(-frameCount / 400.0f);
-		float radial_pull = 0.0008f;
-
-		for (int j = 1; j < N - 1; ++j) {
-			for (int i = 1; i < N - 1; ++i) {
-				float dx = i - N / 2;
-				float dy = j - N / 2;
-				float dist = sqrtf(dx * dx + dy * dy) + 1e-5f;
-
-				float velX = -dy / dist * swirl_strength - dx / dist * radial_pull;
-				float velY = +dx / dist * swirl_strength - dy / dist * radial_pull;
+				float velX = (-dy / dist_safe * swirl_strength - dx / dist_safe * radial_pull) * weight;
+				float velY = (+dx / dist_safe * swirl_strength - dy / dist_safe * radial_pull) * weight;
 
 				FluidCubeAddVelocity(cube, i, j, velX, velY);
+				break;
+			}
+
+			case 3: {
+				// Full spiral vortex
+				float spiral_strength = strength / 2 * expf(-frameCount / 500.0f);
+				float dist_safe = dist + 1e-5f;
+
+				float angle = atan2f(dy, dx);
+				float velX = -sinf(angle) * spiral_strength * weight;
+				float velY = cosf(angle) * spiral_strength * weight;
+
+				FluidCubeAddVelocity(cube, i, j, velX, velY);
+				break;
+			}
 			}
 		}
-		break;
-	}
 	}
 }
 
